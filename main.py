@@ -20,33 +20,25 @@ shaders_folder = decky_plugin.DECKY_PLUGIN_DIR + "/shaders"
 class Plugin:
     _enabled = False
     _current = "0"
-    _current_screensaver = "SS_ScreenOff.fx"
 
-    def _get_all_shaders():
+    def _get_all_shaders(self):
         return sorted([str(p.name) for p in Path(destination_folder).glob("*.fx")])
 
     async def get_shader_list(self):
-        shaders = [s for s in Plugin._get_all_shaders() if not s.startswith("SS_")]
-        return shaders
-
-    async def get_screensaver_list(self):
-        shaders = [s for s in Plugin._get_all_shaders() if s.startswith("SS_")]
+        shaders = Plugin._get_all_shaders(self)
         return shaders
 
     async def get_current_shader(self):
         return Plugin._current
 
-    async def get_current_screensaver(self):
-        return Plugin._current_screensaver
-
-    async def apply_shader(self, screensaver):
-        shader = Plugin._current if not screensaver else Plugin._current_screensaver
+    async def apply_shader(self):
+        shader = Plugin._current
         logger.info("Applying shader " + shader)
         try:
             ret = subprocess.run([shaders_folder + "/set_shader.sh", shader], capture_output=True)
             logger.info(ret)
         except Exception:
-            logger.exepction("apply screensaver")
+            logger.exception("apply shader")
 
     async def set_shader(self, shader_name):
         logger.info("Setting and applying shader " + shader_name)
@@ -57,11 +49,7 @@ class Plugin:
             decky_plugin.logger.info(ret)
             Plugin._current = shader_name
         except Exception:
-            decky_plugin.logger.exepction("setting shader")
-
-    async def set_screensaver(self, shader_name):
-        logger.info("Setting screensaver " + shader_name)
-        Plugin._current_screensaver = shader_name
+            decky_plugin.logger.exception("setting shader")
 
     async def _main(self):
         try:
@@ -73,6 +61,6 @@ class Plugin:
                     decky_plugin.logger.debug(f"could not copy {item}")
             decky_plugin.logger.info("Initialized")
             decky_plugin.logger.info(str(await Plugin.get_shader_list(self)))
-            await Plugin.apply_shader(self, False)
+            await Plugin.apply_shader(self)
         except Exception:
-            decky_plugin.logger.exepction("main")
+            decky_plugin.logger.exception("main")
